@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget1000</title>
+    <style>
+        :root {
+            --primary: #a29bfe;
+            --secondary: #74b9ff;
+            --accent: #ff7675;
+            --bg: #fdfaf6;
+            --card-bg: #ffffff;
+            --text: #57606f;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Hiragino Sans', 'Meiryo', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app-card { background: var(--card-bg); border-radius: 24px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); width: 100%; max-width: 350px; }
+        h3 { text-align: center; color: var(--primary); font-size: 1.2rem; margin-bottom: 20px; letter-spacing: 1px; }
+        
+        .budget-setting { margin-bottom: 15px; }
+        .budget-setting label { font-size: 0.75rem; font-weight: bold; margin-left: 5px; color: #a4b0be; }
+        .input-style { width: calc(100% - 24px); padding: 12px; border: 2px solid #f1f2f6; border-radius: 14px; font-size: 16px; margin-top: 5px; background: #fcfcfc; color: var(--text); }
+        .input-style:focus { border-color: var(--primary); outline: none; }
+
+        .status-box { background: #f8f9fa; border-radius: 18px; padding: 18px; text-align: center; margin-bottom: 20px; }
+        .total-val { font-size: 0.9rem; color: #a4b0be; margin-bottom: 5px; }
+        .total-val span { font-size: 1.5rem; font-weight: 900; color: var(--text); }
+        .progress-container { background: #eee; height: 8px; border-radius: 4px; margin: 12px 0; overflow: hidden; }
+        .progress-bar { background: var(--primary); width: 0%; height: 100%; transition: width 0.4s ease; }
+        .remain-val { font-size: 1rem; font-weight: bold; }
+
+        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .add-btn { color: white; border: none; padding: 14px; flex: 1; border-radius: 14px; font-weight: bold; font-size: 0.9rem; cursor: pointer; transition: transform 0.1s; }
+        .add-btn.t10 { background: var(--primary); box-shadow: 0 4px 15px rgba(162, 155, 254, 0.3); }
+        .add-btn.t8 { background: var(--secondary); box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3); }
+        .add-btn:active { transform: scale(0.95); }
+
+        .item-list { margin-top: 20px; padding: 0; list-style: none; max-height: 200px; overflow-y: auto; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid #f1f2f6; font-size: 0.8rem; }
+        .tax-badge { font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; background: #eee; margin-right: 4px; }
+        .del-btn { color: var(--accent); background: none; border: 1px solid var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; width: auto; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="app-card">
+        <h3>🛒 お買い物チェック</h3>
+        
+        <div class="budget-setting">
+            <label>予算設定（税込）</label>
+            <input type="number" id="budgetInput" value="1000" oninput="render()" class="input-style">
+        </div>
+
+        <div class="status-box">
+            <div class="total-val">現在の税込合計: <span id="totalDisplay">0</span>円</div>
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div class="remain-val" id="statusDisplay">--</div>
+        </div>
+
+        <input type="number" id="itemPrice" placeholder="商品の税抜価格" inputmode="numeric" class="input-style" style="margin-bottom: 10px;">
+        
+        <div class="btn-group">
+            <button onclick="addItem(1.1)" class="add-btn t10">10%追加</button>
+            <button onclick="addItem(1.08)" class="add-btn t8">8%追加</button>
+        </div>
+
+        <ul id="itemList" class="item-list"></ul>
+    </div>
+
+    <script>
+        let items = [];
+
+        function addItem(rate) {
+            const input = document.getElementById('itemPrice');
+            const price = parseFloat(input.value);
+            if (isNaN(price) || price <= 0) return;
+            items.push({ price, rate });
+            render();
+            input.value = '';
+            input.focus();
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            render();
+        }
+
+        function render() {
+            const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            const listEl = document.getElementById('itemList');
+            const totalEl = document.getElementById('totalDisplay');
+            const statusEl = document.getElementById('statusDisplay');
+            const progressEl = document.getElementById('progressBar');
+            
+            listEl.innerHTML = '';
+            let totalInTax = 0;
+
+            items.forEach((item, index) => {
+                const inTax = Math.floor(item.price * item.rate);
+                totalInTax += inTax;
+                const taxLabel = item.rate === 1.1 ? '10%' : '8%';
+                
+                const li = document.createElement('li');
+                li.className = 'item-row';
+                li.innerHTML = `
+                    <span><span class="tax-badge">${taxLabel}</span>税抜 ${item.price.toLocaleString()}円 <small>(込${inTax}円)</small></span>
+                    <button class="del-btn" onclick="removeItem(${index})">削除</button>
+                `;
+                listEl.appendChild(li);
+            });
+
+            totalEl.textContent = totalInTax.toLocaleString();
+            const diffInTax = budget - totalInTax;
+            
+            const percent = budget > 0 ? Math.min((totalInTax / budget) * 100, 100) : 0;
+            progressEl.style.width = percent + '%';
+            progressEl.style.background = diffInTax >= 0 ? 'var(--primary)' : 'var(--accent)';
+
+            if (diffInTax >= 0) {
+                // 10%と8%それぞれの買える上限を計算
+                const limit10 = Math.floor(diffInTax / 1.1);
+                const limit8 = Math.floor(diffInTax / 1.08);
+                statusEl.innerHTML = `あと税抜 ${limit10.toLocaleString()}円 (10%) <br> <span style="font-size:0.8rem; font-weight:normal;">または税抜 ${limit8.toLocaleString()}円 (8%)</span>`;
+                statusEl.style.color = "var(--primary)";
+            } else {
+                statusEl.textContent = `${Math.abs(diffInTax).toLocaleString()}円 オーバー`;
+                statusEl.style.color = "var(--accent)";
+            }
+        }
+        render();
+    </script>
+</body>
+</html>
