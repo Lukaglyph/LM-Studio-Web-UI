@@ -1,7 +1,9 @@
 🌌LM Studio Web UI
+<img width="1246" height="680" alt="スクリーンショット 2026-02-17 201256" src="https://github.com/user-attachments/assets/958abfce-2dd9-4948-8ab7-69b53daf8ac1" />
 
 LM Studioで稼働するローカルLLMを、ブラウザから操作するためのWEBインターフェースです。
 アイコンや背景のカスタマイズ、会話履歴のローカル保存に対応しています。
+
 🚀 主な機能
 
     ローカルLLM連携: LM StudioのAPIサーバーを利用したプライベートなチャット環境。
